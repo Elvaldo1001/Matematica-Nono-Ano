@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quiz de Matemática do 9º Ano</title>
+<style>
+body {
+  font-family: "Poppins", sans-serif;
+  background: linear-gradient(135deg, #0077cc, #00c6ff);
+  color: #222;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  margin: 0;
+}
+.container {
+  background: #fff;
+  padding: 30px;
+  border-radius: 15px;
+  box-shadow: 0 0 15px rgba(0,0,0,0.2);
+  width: 90%;
+  max-width: 600px;
+  text-align: center;
+}
+h1,h2 {
+  color: #0077cc;
+}
+input {
+  padding: 10px;
+  width: 80%;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-size: 1rem;
+  margin-bottom: 10px;
+}
+button {
+  background: #0077cc;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 1rem;
+  cursor: pointer;
+}
+button:hover { background: #005fa3; }
+.hide { display: none; }
+.options { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; }
+.progress { width: 100%; height: 10px; background: #eee; border-radius: 5px; margin-bottom: 10px; overflow: hidden; }
+.progress-bar { height: 10px; background: #0077cc; width: 0%; transition: width 0.3s; }
+ul { list-style: none; padding: 0; }
+li { background: #f1f1f1; margin: 5px 0; padding: 8px; border-radius: 8px; }
+#tempo { font-weight: bold; margin-bottom: 10px; }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <!-- INÍCIO -->
+  <div id="inicio">
+    <h1>Quiz de Matemática do 9º Ano</h1>
+    <p>Digite seu nome para começar:</p>
+    <input type="text" id="nomeJogador" placeholder="Seu nome" />
+    <br>
+    <button onclick="iniciarQuiz()">Iniciar</button>
+  </div>
+
+  <!-- QUIZ -->
+  <div id="quiz" class="hide">
+    <div class="progress"><div class="progress-bar" id="barra"></div></div>
+    <div id="tempo">⏳ Tempo: 20s</div>
+    <h2 id="pergunta"></h2>
+    <div id="opcoes" class="options"></div>
+  </div>
+
+  <!-- RESULTADO -->
+  <div id="resultado" class="hide">
+    <h2>Resultado final</h2>
+    <p id="pontuacao"></p>
+    <h3>🏆 Ranking</h3>
+    <ul id="ranking"></ul>
+  </div>
+</div>
+
+<script>
+// SONS DIVERTIDOS (offline base64)
+const somAcerto = new Audio("data:audio/wav;base64,UklGRhQAAABXQVZFZm10IBAAAAABAAEAgD4AAAB9AAACABAAZGF0YQAAAAA=");
+const somErro   = new Audio("data:audio/wav;base64,UklGRhQAAABXQVZFZm10IBAAAAABAAEAgD4AAAB9AAACABAAZGF0YQAAAAE=");
+
+const perguntas = [
+{ pergunta: "1) Quanto é 5 + 3?", opcoes: ["6","7","8","9"], correta: 2 },
+{ pergunta: "2) Qual é o valor de x: 2x = 10?", opcoes: ["2","3","5","10"], correta: 2 },
+{ pergunta: "3) Qual fração é equivalente a 1/2?", opcoes: ["2/4","3/5","4/5","2/3"], correta: 0 },
+{ pergunta: "4) O perímetro de um quadrado de lado 6 cm é:", opcoes: ["12 cm","18 cm","24 cm","36 cm"], correta: 2 },
+{ pergunta: "5) Resolva: 3² + 4²", opcoes: ["12","25","16","13"], correta: 1 },
+{ pergunta: "6) A raiz quadrada de 81 é:", opcoes: ["7","8","9","10"], correta: 2 },
+{ pergunta: "7) (10 − 4) × 3 =", opcoes: ["14","18","20","24"], correta: 1 },
+{ pergunta: "8) 20% de 50 é:", opcoes: ["5","8","10","15"], correta: 2 },
+{ pergunta: "9) Soma dos ângulos internos de um triângulo:", opcoes: ["90°","180°","270°","360°"], correta: 1 },
+{ pergunta: "10) O número -7 é:", opcoes: ["Natural","Inteiro","Racional não inteiro","Irracional"], correta: 1 },
+{ pergunta: "11) Resolva: 4x + 2 = 10", opcoes: ["x=1","x=2","x=3","x=4"], correta: 2 },
+{ pergunta: "12) Triângulo com lados 3,4,5 é:", opcoes: ["Equilátero","Isósceles","Retângulo","Escaleno"], correta: 2 },
+{ pergunta: "13) Valor aproximado de π:", opcoes: ["2,14","3,14","3,41","3,04"], correta: 1 },
+{ pergunta: "14) (-3) × (-5) =", opcoes: ["-15","15","8","-8"], correta: 1 },
+{ pergunta: "15) Volume de um cubo de aresta 2 cm:", opcoes: ["4 cm³","6 cm³","8 cm³","12 cm³"], correta: 2 },
+{ pergunta: "16) Gráfico de uma função do 1º grau é:", opcoes: ["Reta","Parábola","Circunferência","Hipérbole"], correta: 0 },
+{ pergunta: "17) Média aritmética de 6,8 e 10:", opcoes: ["7","8","9","10"], correta: 1 },
+{ pergunta: "18) 2³ × 3² =", opcoes: ["36","24","72","18"], correta: 0 },
+{ pergunta: "19) Solução de x² = 49:", opcoes: ["x=7","x=-7","x=±7","x=49"], correta: 2 },
+{ pergunta: "20) Se f(x)=2x²-3x+1, então f(2) =", opcoes: ["3","5","7","11"], correta: 1 }
+];
+
+let indice = 0;
+let pontos = 0;
+let jogador = "";
+let timer;
+
+const inicio = document.getElementById("inicio");
+const quiz = document.getElementById("quiz");
+const resultado = document.getElementById("resultado");
+const perguntaEl = document.getElementById("pergunta");
+const opcoesEl = document.getElementById("opcoes");
+const pontuacaoEl = document.getElementById("pontuacao");
+const barra = document.getElementById("barra");
+const rankingEl = document.getElementById("ranking");
+const tempoEl = document.getElementById("tempo");
+
+function iniciarQuiz() {
+  const nome = document.getElementById("nomeJogador").value.trim();
+  if (nome === "") { alert("Digite seu nome!"); return; }
+  jogador = nome;
+  inicio.classList.add("hide");
+  quiz.classList.remove("hide");
+  indice = 0;
+  pontos = 0;
+  mostrarPergunta();
+}
+
+function mostrarPergunta() {
+  const q = perguntas[indice];
+  perguntaEl.textContent = q.pergunta;
+  opcoesEl.innerHTML = "";
+  barra.style.width = ((indice+1)/perguntas.length*100) + "%";
+  let tempo = 20;
+  tempoEl.textContent = `⏳ Tempo: ${tempo}s`;
+  
+  timer = setInterval(() => {
+    tempo--;
+    tempoEl.textContent = `⏳ Tempo: ${tempo}s`;
+    if (tempo <= 0) {
+      clearInterval(timer);
+      somErro.play();
+      proximaPergunta();
+    }
+  }, 1000);
+
+  q.opcoes.forEach((op,i)=>{
+    const btn = document.createElement("button");
+    btn.textContent = op;
+    btn.onclick = () => { 
+      clearInterval(timer);
+      if(i === q.correta) { pontos++; somAcerto.play(); }
+      else { somErro.play(); }
+      proximaPergunta();
+    };
+    opcoesEl.appendChild(btn);
+  });
+}
+
+function proximaPergunta() {
+  indice++;
+  if(indice<perguntas.length) mostrarPergunta();
+  else mostrarResultado();
+}
+
+function mostrarResultado() {
+  quiz.classList.add("hide");
+  resultado.classList.remove("hide");
+  pontuacaoEl.textContent = `${jogador}, você acertou ${pontos} de ${perguntas.length} questões!`;
+
+  let ranking = JSON.parse(localStorage.getItem("rankingQuiz") || "[]");
+  ranking.push({nome: jogador, pontos});
+  ranking.sort((a,b)=>b.pontos-a.pontos);
+  ranking = ranking.slice(0,5);
+  localStorage.setItem("rankingQuiz", JSON.stringify(ranking));
+  rankingEl.innerHTML = ranking.map((r,i)=>`<li>${i+1}. ${r.nome} - ${r.pontos} pts</li>`).join("");
+}
+</script>
+
+</body>
+</html>
